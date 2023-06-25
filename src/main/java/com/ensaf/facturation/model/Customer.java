@@ -1,55 +1,25 @@
 package com.ensaf.facturation.model;
 
-public class Customer {
-	private Long id;
+import lombok.AllArgsConstructor;
+import lombok.Data;
+import lombok.EqualsAndHashCode;
+import lombok.RequiredArgsConstructor;
+import lombok.ToString;
+import lombok.experimental.SuperBuilder;
+
+@SuperBuilder
+@RequiredArgsConstructor @AllArgsConstructor
+
+@Data
+@EqualsAndHashCode(callSuper = true, of = "id")
+@ToString(callSuper = true)
+public class Customer extends Entity {
 	private String name;
 	private String email;
 	private String phone;
 	private String address;
 
-	public Customer() {
-	}
-
-	public Long getId() {
-		return id;
-	}
-
-	public void setId(Long id) {
-		this.id = id;
-	}
-
-	public String getName() {
-		return name;
-	}
-
-	public void setName(String name) {
-		this.name = name;
-	}
-
-	public String getPhone() {
-		return phone;
-	}
-
-	public void setPhone(String phone) {
-		this.phone = phone;
-	}
-
-	public String getAddress() {
-		return address;
-	}
-
-	public void setAddress(String address) {
-		this.address = address;
-	}
-	
-	public String getEmail() {
-		return email;
-	}
-
-	public void setEmail(String email) {
-		this.email = email;
-	}
-
+	/*
 	@Override
 	public String toString() {
 		StringBuilder builder = new StringBuilder();
@@ -64,4 +34,5 @@ public class Customer {
 		builder.append("]");
 		return builder.toString();
 	}
+	*/
 }

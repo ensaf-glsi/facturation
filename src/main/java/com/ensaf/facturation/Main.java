@@ -7,9 +7,13 @@ import java.sql.Statement;
 import java.util.Date;
 
 import com.ensaf.facturation.config.DatabaseConnectionPool;
+import com.ensaf.facturation.dao.CustomerDao;
+import com.ensaf.facturation.model.Customer;
 import com.ensaf.facturation.model.User;
 
 public class Main {
+	
+	CustomerDao customerDao = new CustomerDao();
 	
 	void sleep(Integer seconds) {
 		try {
@@ -20,13 +24,47 @@ public class Main {
 	}
 
 	public Main()  {
-		jdbcExample();
+//		jdbcExample();
+//		insertCustomer();
+//		updateCustomer();
+//		deleteCustomer();
+//		findCustomerById();
+//		findCustomer();
+		findCustomerMultiCriteria();
 	}
 	
+	// dao ou repository : couche d'acces aux données 
+	
+	private void findCustomerById() {
+		System.out.println(customerDao.findById(-1L));
+	}
+
+	private void findCustomer() {
+		System.out.println("======== criteria null");
+		System.out.println(customerDao.find((String) null));
+		System.out.println("======== criteria empty");
+		System.out.println(customerDao.find(""));
+		System.out.println("======== criteria not empty");
+		System.out.println(customerDao.find("name1"));
+		System.out.println("======== criteria id");
+		System.out.println(customerDao.find("7"));
+	}
+
+	private void findCustomerMultiCriteria() {
+		System.out.println("======== no criteria");
+		System.out.println(customerDao.find(new Customer()));
+		System.out.println("======== find by id");
+		System.out.println(customerDao.find(Customer.builder().id(4L).build()));
+		System.out.println("======== find by address");
+		System.out.println(customerDao.find(Customer.builder().address("ad").build()));
+		System.out.println("======== find by name and phone");
+		System.out.println(customerDao.find(Customer.builder().name("name1").phone("phone2").build()));
+	}
+
 	void lombokExample() {
-		User user1 = newUSer("1");
+		User user1 = newUSer(1L);
 		sleep(1);
-		User user2 = newUSer("1");
+		User user2 = newUSer(1L);
 		System.out.println(user1);
 		System.out.println(user1.equals(user2));
 	}
@@ -44,8 +82,31 @@ public class Main {
             // Handle exception
         }
 	}
+	
+	void insertCustomer() {
+		Customer c = customerDao.create(
+				Customer.builder().name("name" + 1)
+				.phone("phone" + 1).email("email" + 1).build()
+				
+		);
+		System.out.println(c);
+	}
 
-	private User newUSer(String id) {
+	void updateCustomer() {
+		Customer c = customerDao.update(
+				Customer.builder().id(5l).name("name" + 5)
+				.email("email" + 5).address("address" + 5).build()
+				
+		);
+		System.out.println(c);
+	}
+
+	void deleteCustomer() {
+		System.out.println(customerDao.delete(8l));
+	}
+
+	
+	private User newUSer(Long id) {
 //		User user = new User();
 //		user.setId(id);
 //		user.setUsername("user" + id);

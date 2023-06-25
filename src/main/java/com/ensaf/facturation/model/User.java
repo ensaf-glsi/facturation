@@ -18,6 +18,7 @@ import java.util.Date;
 //@EqualsAndHashCode(of = "id")
 
 @SuperBuilder
+@RequiredArgsConstructor @AllArgsConstructor
 
 @Data
 @EqualsAndHashCode(callSuper = true, of = "id")

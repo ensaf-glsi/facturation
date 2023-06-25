@@ -11,7 +11,7 @@ public class DatabaseConnectionPool {
     private static HikariDataSource dataSource;
 
     static {
-    	ApplicationConfig appConfig = ApplicationConfig.getInstance();
+    	AppProperties appConfig = AppProperties.getInstance();
         config.setJdbcUrl(appConfig.getProperty("datasource.url"));
         config.setUsername(appConfig.getProperty("datasource.user"));
         config.setPassword(appConfig.getProperty("datasource.password"));
