@@ -12,6 +12,7 @@ import com.ensaf.facturation.model.Customer;
 import com.ensaf.facturation.model.User;
 
 public class Main {
+	static int count = 1;
 	
 	CustomerDao customerDao = new CustomerDao();
 	
@@ -25,12 +26,12 @@ public class Main {
 
 	public Main()  {
 //		jdbcExample();
-//		insertCustomer();
+		insertCustomer();
 //		updateCustomer();
 //		deleteCustomer();
 //		findCustomerById();
-//		findCustomer();
-		findCustomerMultiCriteria();
+		findCustomer();
+//		findCustomerMultiCriteria();
 	}
 	
 	// dao ou repository : couche d'acces aux données 
@@ -83,12 +84,14 @@ public class Main {
         }
 	}
 	
+	Customer newCustomer(int n) {
+		return Customer.builder().name("name" + n)
+			.phone("phone" + n).email("email" + n)
+			.address("address" + n).build();
+	}
+	
 	void insertCustomer() {
-		Customer c = customerDao.create(
-				Customer.builder().name("name" + 1)
-				.phone("phone" + 1).email("email" + 1).build()
-				
-		);
+		Customer c = customerDao.create(newCustomer(count++));
 		System.out.println(c);
 	}
 

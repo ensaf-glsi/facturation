@@ -50,8 +50,10 @@ public class CustomerDao {
 
 			// Récupère les clés générées par l'insertion
 			try (ResultSet generatedKeys = preparedStatement.getGeneratedKeys()) {
-				// Si une clé a été générée, la définit comme l'ID du client et retourne le client
-				customer.setId(generatedKeys.getLong(1));
+			    // Si une clé a été générée, la définit comme l'ID du client et retourne le client
+			    if (generatedKeys.next()) {
+			        customer.setId(generatedKeys.getLong(1));
+			    }
 			}
 			return customer;
 
