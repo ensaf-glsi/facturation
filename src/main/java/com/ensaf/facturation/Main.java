@@ -14,7 +14,7 @@ import com.ensaf.facturation.model.User;
 public class Main {
 	static int count = 1;
 	
-	CustomerDao customerDao = new CustomerDao();
+	CustomerDao customerDao = CustomerDao.getInstance();
 	
 	void sleep(Integer seconds) {
 		try {
@@ -26,7 +26,7 @@ public class Main {
 
 	public Main()  {
 //		jdbcExample();
-		insertCustomer();
+//		insertCustomer();
 //		updateCustomer();
 //		deleteCustomer();
 //		findCustomerById();
