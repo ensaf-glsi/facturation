@@ -15,6 +15,7 @@ import com.ensaf.facturation.utils.Predicate;
 import com.ensaf.facturation.utils.StringUtils;
 
 import lombok.Cleanup;
+import lombok.Getter;
 
 /* C: create
  * R: read
@@ -22,6 +23,11 @@ import lombok.Cleanup;
  * D: delete
  */
 public class CustomerDao {
+	
+	@Getter
+	private volatile static CustomerDao instance = new CustomerDao();
+	
+	private CustomerDao() {}
 
 	/**
 	 * Crée un nouveau client dans la base de données et retourne le client avec
@@ -219,12 +225,28 @@ public class CustomerDao {
 	        System.err.println("SQLException occurred while finding a customer: " + e.getMessage());
 	        e.printStackTrace();
 	    }
-
 	    return result;
+	}
+	
+	public boolean existsByEmail(String email) {
+	    try (Connection connection = DatabaseConnectionPool.getConnection()) { 
+		    String sql = "SELECT id FROM customers where upper(email) = ?";
+	        PreparedStatement preparedStatement = connection.prepareStatement(sql);
+	        preparedStatement.setObject(1, email.toUpperCase());
+	        ResultSet rs = preparedStatement.executeQuery();
+	        return rs.next();
+	    } catch (SQLException e) {
+	        System.err.println("SQLException occurred while finding a customer: " + e.getMessage());
+	        e.printStackTrace();
+	    }
+	    return false;
 	}
 
 	private List<Predicate> buildPredicates(Customer customer) {
 	    List<Predicate> predicates = new ArrayList<>();
+	    if (customer == null) {
+	    	return predicates;
+	    }
 
 	    if (customer.getId() != null) {
 	        predicates.add(new Predicate("id = ?", customer.getId()));
