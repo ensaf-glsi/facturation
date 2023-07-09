@@ -12,6 +12,7 @@ public class DatabaseConnectionPool {
 
     static {
     	AppProperties appConfig = AppProperties.getInstance();
+    	config.setDriverClassName(appConfig.getProperty("datasource.driver"));
         config.setJdbcUrl(appConfig.getProperty("datasource.url"));
         config.setUsername(appConfig.getProperty("datasource.user"));
         config.setPassword(appConfig.getProperty("datasource.password"));
