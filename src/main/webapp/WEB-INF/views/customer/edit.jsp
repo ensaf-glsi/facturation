@@ -8,13 +8,24 @@
 </head>
 <body>
 	<h1>
-		Ajouter un client :
+		<c:choose>
+			<c:when test="${empty item}">
+				Ajouter un client
+			</c:when>
+			<c:otherwise>
+				Modifier client (${item.id})
+			</c:otherwise>
+		</c:choose>
 	</h1>
+	
+	<a href="javascript:history.go(-1)">Retour</a>
+	
 	
 	<!-- <form action="" method="post"> -->
 	
 	<form action="${pageContext.request.contextPath}/customers" method="post">
-		<input type="hidden" name="id" value="${item.id}">
+		<input type="hidden" name="id" value="${item.id}" />
+		<input type="hidden" name="action" value='<%= request.getAttribute("item") == null ? "create" : "update" %>' />
 		<table border="0">
 			<tbody>
 				<tr>

@@ -6,17 +6,17 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
+import java.util.Objects;
 
 import com.ensaf.facturation.model.Customer;
 import com.ensaf.facturation.service.CustomerService;
+import static com.ensaf.facturation.utils.Constants.*;
 import com.ensaf.facturation.utils.RequestParams;
 
 @WebServlet(urlPatterns = CustomerController.URL_PATTERN + "/*")
 public class CustomerController extends HttpServlet {
-	private final static String URL_PATTERN = "/customers";
-	
-	private final static String EDIT = "/edit";
-	
+	final static String URL_PATTERN = "/customers";
+		
 	private static final long serialVersionUID = 1L;
 	private CustomerService customerService = CustomerService.getInstance();
 
@@ -32,7 +32,13 @@ public class CustomerController extends HttpServlet {
 					request.setAttribute("item", customerService.findById(id));
 				}
 				// affichage du formulaire pour creer ou modifier un client
-		    	request.getRequestDispatcher("/views/customer/edit.jsp").forward(request, response);					
+		    	request.getRequestDispatcher(PREFIX_PATH + "/customer/edit.jsp").forward(request, response);					
+		    	break;
+			}
+			case DELETE: {
+				Long id = params.getLong("id");
+				customerService.deleteById(id);
+				response.sendRedirect(request.getContextPath() + URL_PATTERN);
 		    	break;
 			}
 			case "": {
@@ -40,7 +46,13 @@ public class CustomerController extends HttpServlet {
 				Customer filter = getCustomer(params);
 		    	request.setAttribute("filter", filter);
 		    	request.setAttribute("list", customerService.find(filter));
-		    	request.getRequestDispatcher("/views/customer/list.jsp").forward(request, response);
+		        String requestedWithHeader = request.getHeader("X-Requested-With");
+		        System.out.println("request with " +  requestedWithHeader);
+		        String jspView = "/customer/list.jsp";
+		        if (Objects.equals(requestedWithHeader, "XMLHttpRequest")) {
+		            jspView = "/customer/list-fragment.jsp";
+		        }
+		    	request.getRequestDispatcher(PREFIX_PATH + jspView).forward(request, response);
 		    	break;				
 			}
 			default:
@@ -51,7 +63,13 @@ public class CustomerController extends HttpServlet {
 	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
 		RequestParams params = new RequestParams(request);
 		Customer customer = getCustomer(params);
-		customerService.create(customer);
+		String action = params.get(ACTION);
+		if (Objects.equals(action, CREATE)) {
+			customerService.create(customer);
+		} else if (Objects.equals(action, UPDATE)) {
+			customerService.update(customer);
+		} 
+		
 		response.sendRedirect(request.getContextPath() + URL_PATTERN);
 	}
 	

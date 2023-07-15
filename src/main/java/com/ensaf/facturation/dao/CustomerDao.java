@@ -228,11 +228,17 @@ public class CustomerDao {
 	    return result;
 	}
 	
-	public boolean existsByEmail(String email) {
+	public boolean existsByEmail(String email, Long id) {
 	    try (Connection connection = DatabaseConnectionPool.getConnection()) { 
 		    String sql = "SELECT id FROM customers where upper(email) = ?";
+		    if (id != null) {
+		    	sql += " and id <> ?";
+		    }
 	        PreparedStatement preparedStatement = connection.prepareStatement(sql);
 	        preparedStatement.setObject(1, email.toUpperCase());
+		    if (id != null) {
+		        preparedStatement.setObject(2, id);
+		    }
 	        ResultSet rs = preparedStatement.executeQuery();
 	        return rs.next();
 	    } catch (SQLException e) {
@@ -240,6 +246,10 @@ public class CustomerDao {
 	        e.printStackTrace();
 	    }
 	    return false;
+	}
+	
+	public boolean existsByEmail(String email) {
+		return existsByEmail(email, null);
 	}
 
 	private List<Predicate> buildPredicates(Customer customer) {

@@ -22,7 +22,7 @@ public class CustomerService {
 	
 	
 	public Customer create(Customer c) {
-		// controler unicité de l'email
+		// controler l'unicité de l'email
 		if (customerDao.existsByEmail(c.getEmail())) {
 			System.err.println("Email deja pris !");
 			//TODO launch exception
@@ -31,12 +31,28 @@ public class CustomerService {
 		return customerDao.create(c);
 	}
 	
+	public Customer update(Customer c) {
+		// controler l'unicité de l'email
+		if (customerDao.existsByEmail(c.getEmail(), c.getId())) {
+			System.err.println("Email deja pris !");
+			//TODO launch exception
+			return null;
+		}
+		return customerDao.update(c);
+	}
+	
 	public List<Customer> find(Customer filter) {
 		return customerDao.find(filter);
 	}
 
 	public Customer findById(Long id) {
 		return customerDao.findById(id);
+	}
+
+
+	public void deleteById(Long id) {
+		customerDao.delete(id);
+		
 	}
 
 }
