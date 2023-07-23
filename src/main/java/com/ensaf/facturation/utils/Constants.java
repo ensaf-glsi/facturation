@@ -9,5 +9,10 @@ public class Constants {
 	public final static String ACTION = "action";
 	public final static String CREATE = "create";
 	public final static String UPDATE = "update";
+	
+	public final static String AUTH_PATTERN = "/auth";
+	public final static String LOGIN = "/login";
+	public final static String LOGOUT = "/logout";
 
+	public final static String AUTH_COOKIE = "auth";
 }

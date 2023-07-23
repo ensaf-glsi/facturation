@@ -9,6 +9,8 @@
 	<script src="js/ajax.js"></script>
 </head>
 <body>
+	<a href="${pageContext.request.contextPath}/auth/logout">Se déconnecter</a>
+
 	<h1>Liste des clients :</h1>
 	<input />
 	<a href="${pageContext.request.contextPath}/customers/edit">Ajouter</a>
