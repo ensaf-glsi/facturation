@@ -1,19 +1,17 @@
 package com.ensaf.facturation.web;
 
-import static com.ensaf.facturation.utils.Constants.ACTION;
-import static com.ensaf.facturation.utils.Constants.AUTH_COOKIE;
-import static com.ensaf.facturation.utils.Constants.AUTH_PATTERN;
-import static com.ensaf.facturation.utils.Constants.LOGIN;
-import static com.ensaf.facturation.utils.Constants.LOGOUT;
-import static com.ensaf.facturation.utils.Constants.PREFIX_PATH;
+import static com.ensaf.facturation.utils.Constants.*;
 
 import java.io.IOException;
 import java.util.Objects;
-import java.util.stream.Stream;
 
 import com.ensaf.facturation.model.User;
+import com.ensaf.facturation.security.SecurityContextHolder;
+import com.ensaf.facturation.security.model.UserAuthentication;
 import com.ensaf.facturation.security.service.AuthenticationService;
+import com.ensaf.facturation.security.service.JwtTokenProvider;
 import com.ensaf.facturation.utils.RequestParams;
+import com.ensaf.facturation.utils.StringUtils;
 
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -22,78 +20,77 @@ import jakarta.servlet.http.HttpServlet;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
+/**
+ * This servlet is responsible for handling the authentication logic of the application.
+ * It responds to both GET and POST requests.
+ */
 @WebServlet(urlPatterns = AUTH_PATTERN + "/*")
 public class AuthController extends HttpServlet {
-	private AuthenticationService authenticationService = AuthenticationService.getInstance();
-//  private static final String SECRET_KEY = "your-secret-key"; // on peut le recuperer a partir de fichier properties ...
-	
-	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		RequestParams params = new RequestParams(request);
-		String requestURI = request.getRequestURI();
-		String uri = requestURI.replace(request.getContextPath(), "").replace(AUTH_PATTERN, "");
-		System.out.println("uri : '" + uri + "'");
-		switch (uri) {
-			case "":
-			case LOGIN: {
-				// affichage du formulaire d'authentification
-		    	request.getRequestDispatcher(PREFIX_PATH + "/auth/login.jsp").forward(request, response);					
-		    	break;
-			}
-			case LOGOUT: {
-				Stream.of(request.getCookies())
-						.filter(c -> AUTH_COOKIE.equals(c.getName()))
-						.findFirst().ifPresent(c -> {
-							System.out.println("logout : " + c.getValue() + "-" + c.getMaxAge());
-							c.setMaxAge(0);
-							//FIXME delete the cookie 
-							response.addCookie(c);
-						});
-				response.sendRedirect(request.getContextPath() + AUTH_PATTERN);
-				break;
-			}
-			default:
-				throw new IllegalArgumentException("Unexpected value: " + uri);
-			}
-	}
 
-	protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
-		RequestParams params = new RequestParams(request);
-//		Customer customer = getCustomer(params);
-		String action = params.get(ACTION);
-		System.out.println("do post auth");
-		
-		if (Objects.equals(action, "login")) {
-			String username = params.get("username");
-			String password = params.get("password");
-			System.out.println("username : " + username);
-			System.out.println("password : " + password);
-			User user = authenticationService.login(username, password);
-			if (user == null) {
-				response.sendRedirect(request.getContextPath() + AUTH_PATTERN + "?error=1&username="+username);
-			} else {
-				System.out.println("auth controller - user : " + user);
-				
-//				request.getSession(true).setAttribute("auth", user); 
-				String auth = new StringBuilder().append(user.getUsername()).append(":").toString();
-//              String signature = CryptoUtils.sign(username, SECRET_KEY);
-//              Cookie cookie = new Cookie("auth", username + ":" + signature);
+    private AuthenticationService authenticationService = AuthenticationService.getInstance();
+    private JwtTokenProvider tokenProvider = JwtTokenProvider.getInstance();
 
-				Cookie cookie = new Cookie(AUTH_COOKIE, auth);
-				cookie.setHttpOnly(true);
-				cookie.setSecure(true); // dans le cas de https
-				response.addCookie(cookie);
-				System.out.println("cookie created : " + cookie.getValue());
-				response.sendRedirect(request.getContextPath() + CustomerController.URL_PATTERN);
-				
-			}
-		}
-//		} else if (Objects.equals(action, UPDATE)) {
-//			customerService.update(customer);
-//		} 
-//		
-//		response.sendRedirect(request.getContextPath() + URL_PATTERN);
-	}
-	
+    protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+        RequestParams params = new RequestParams(request);
+        String requestURI = request.getRequestURI();
+        String uri = requestURI.replace(request.getContextPath(), "").replace(AUTH_PATTERN, "");
+        
+        switch (uri) {
+            case "":
+            case LOGIN: {
+                // Show login form
+                request.getRequestDispatcher(PREFIX_PATH + "/auth/login.jsp").forward(request, response);                    
+                break;
+            }
+            case LOGOUT: {
+                // Clear the security context and remove the authentication cookie
+                SecurityContextHolder.clearContext();
+                Cookie cookie = new Cookie(AUTH_COOKIE, "");
+                cookie.setMaxAge(0);
+                response.addCookie(cookie);
+                response.sendRedirect(request.getContextPath() + AUTH_PATTERN);
+                break;
+            }
+            default:
+                throw new IllegalArgumentException("Unexpected value: " + uri);
+        }
+    }
+
+    protected void doPost(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    	System.out.println("AuthController - doPost");
+        RequestParams params = new RequestParams(request);
+        String action = params.get(ACTION);
+
+        if (Objects.equals(action, "login")) {
+            String username = params.get("username");
+            String password = params.get("password");
+
+            User user = authenticationService.login(username, password);
+            String redirectUri = params.get(REDIRECT_URI);
+            if (user == null) {
+                response.sendRedirect(request.getContextPath() + AUTH_PATTERN + "?error=1&username="+username + "&" + REDIRECT_URI + "=" + redirectUri);
+            } else {
+                // Create a token and set it in a cookie
+                UserAuthentication userAuthentication = UserAuthentication
+                		.builder().username(username).roles(user.getRoles()).build();
+                String token = tokenProvider.createToken(userAuthentication);
+                Cookie authCookie = new Cookie(AUTH_COOKIE, token);
+                authCookie.setHttpOnly(true);
+                authCookie.setSecure(true); // If https
+                response.addCookie(authCookie);
+
+                // Set the security context
+                SecurityContextHolder.setContext(userAuthentication);
+                String redirect = request.getContextPath() + CustomerController.URL_PATTERN;
+                if (StringUtils.isNotEmpty(redirectUri)) {
+                	redirect = redirectUri;
+                }
+                response.sendRedirect(redirect);
+            }
+        }
+    }
+}
+
 	/*
 	 * 
 	 * Un cookie HTTP comprend plusieurs attributs qui influencent son comportement.
@@ -128,4 +125,3 @@ public class AuthController extends HttpServlet {
 	 * signifie que le cookie est envoyé avec toutes les requêtes cross-site, à
 	 * condition que l'attribut "Secure" soit également défini.
 	 */
-}

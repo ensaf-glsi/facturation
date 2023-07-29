@@ -1,10 +1,14 @@
 package com.ensaf.facturation.security.filter;
 
+import static com.ensaf.facturation.utils.Constants.*;
+
 import java.io.IOException;
 import java.util.Optional;
 import java.util.stream.Stream;
 
-import static com.ensaf.facturation.utils.Constants.*;
+import com.ensaf.facturation.security.SecurityContextHolder;
+import com.ensaf.facturation.security.model.UserAuthentication;
+import com.ensaf.facturation.security.service.JwtTokenProvider;
 
 import jakarta.servlet.Filter;
 import jakarta.servlet.FilterChain;
@@ -16,82 +20,54 @@ import jakarta.servlet.http.Cookie;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 
-@WebFilter(urlPatterns = "/*")
+/**
+ * AuthenticationFilter is a servlet filter that intercepts every request to the server.
+ * It checks if the request contains a valid JWT token in the auth cookie and, if it does,
+ * it sets the security context for the current session.
+ */
+@WebFilter(urlPatterns = "/*", filterName = "AuthenticationFilter")
 public class AuthenticationFilter implements Filter {
-	
-	// /js/*, /auth/*
-	
-	boolean uriToSecure(String uri) {
-		return !(uri.startsWith("/js") || uri.startsWith("/auth"));
-	}
-	
-	public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain)
-			throws IOException, ServletException {
-		HttpServletRequest request = (HttpServletRequest) req;
-		HttpServletResponse response = (HttpServletResponse) res;
-		String requestURI = request.getRequestURI();
-		String uri = requestURI.replace(request.getContextPath(), "");
-		System.out.println("filter request uri : " + uri);
-//		System.out.println("session user : " + request.getSession().getAttribute("auth"));
-		if (uriToSecure(uri)) {
-			Optional<Cookie> authCookie = Stream.of(request.getCookies())
-					.filter(c -> AUTH_COOKIE.equals(c.getName()))
-					.findFirst();
-			if (authCookie.isEmpty()) {
-				System.out.println("utilisateur non connecté");
-				response.sendRedirect(request.getContextPath() + AUTH_PATTERN);
-				return;
-			}
-			//TODO get user info
-			System.out.println("auth cookie : " + authCookie.get().getValue());
-		}
-		chain.doFilter(req, res);
-	}
 
+    private JwtTokenProvider tokenProvider = JwtTokenProvider.getInstance();
 
-	
-	
-	
-//  private static final String SECRET_KEY = "your-secret-key"; // on peut le recuperer a partir de fichier properties ...
-//
-//	@Override
-//	public void doFilter(ServletRequest servletRequest, ServletResponse servletResponse, FilterChain filterChain)
-//			throws IOException, ServletException {
-//		HttpServletRequest request = (HttpServletRequest) servletRequest;
-//		HttpServletResponse response = (HttpServletResponse) servletResponse;
-//
-//		Cookie[] cookies = request.getCookies();
-//
-//		if (cookies != null) {
-//			Optional<Cookie> authCookie = Arrays.stream(cookies).filter(c -> COOKIE_NAME.equals(c.getName()))
-//					.findFirst();
-//
-//			if (authCookie.isPresent()) {
-//				String[] values = authCookie.get().getValue().split(":");
-//
-//				if (values.length == 2) {
-//					String username = values[0];
-//					String providedSignature = values[1];
-//
-//					try {
-//						String expectedSignature = CryptoUtils.sign(username, SECRET_KEY);
-//
-//						if (providedSignature.equals(expectedSignature)) {
-//							// Signature is correct, user is authenticated
-//							// Continue the request
-//							filterChain.doFilter(servletRequest, servletResponse);
-//							return;
-//						}
-//					} catch (NoSuchAlgorithmException | InvalidKeyException e) {
-//						e.printStackTrace();
-//						// Handle exception properly
-//					}
-//				}
-//			}
-//		}
-//
-//		// If no valid auth cookie found, redirect to login
-//		response.sendRedirect(request.getContextPath() + "/login.jsp");
-//	}
+    boolean uriToSecure(String uri) {
+        return !(uri.startsWith("/js") || uri.startsWith("/auth"));
+    }
 
+    @Override
+    public void doFilter(ServletRequest req, ServletResponse res, FilterChain chain)
+            throws IOException, ServletException {
+    	System.out.println("before do filter - AuthenticationFilter");
+        
+        try {
+            // Process the request
+            HttpServletRequest request = (HttpServletRequest) req;
+            HttpServletResponse response = (HttpServletResponse) res;
+            String requestURI = request.getRequestURI();
+            String uri = requestURI.replace(request.getContextPath(), "");
+
+            if (uriToSecure(uri)) {
+                Optional<Cookie> authCookie = Stream.of(Optional.ofNullable(request.getCookies()).orElse(new Cookie[0]))
+                        .filter(c -> AUTH_COOKIE.equals(c.getName()))
+                        .findFirst();
+
+                if (authCookie.isEmpty() || !tokenProvider.validateToken(authCookie.get().getValue())) {
+                    System.out.println("utilisateur non connecté + uri : " + requestURI);
+                 
+                    response.sendRedirect(request.getContextPath() + AUTH_PATTERN + "?" + REDIRECT_URI + "=" + requestURI);
+                    return;
+                }
+
+                // Parse the token and set the security context
+                UserAuthentication userAuth = tokenProvider.parseToken(authCookie.get().getValue());
+                SecurityContextHolder.setContext(userAuth);
+            }
+
+            chain.doFilter(req, res);
+        } finally {
+        	System.out.println("after do filter - AuthenticationFilter");
+            // Always clean up the security context, regardless of what happens while processing the request
+            SecurityContextHolder.clearContext();
+        }
+    }
 }

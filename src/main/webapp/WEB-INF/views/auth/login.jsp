@@ -16,6 +16,7 @@
 	</c:if>
 	<form action="${pageContext.request.contextPath}/auth" method="post">
 		<input type="hidden" name="action" value="login" />
+		<input type="hidden" name="redirect_uri" value="${param.redirect_uri}" />
 		<table border="0">
 			<tbody>
 				<tr>

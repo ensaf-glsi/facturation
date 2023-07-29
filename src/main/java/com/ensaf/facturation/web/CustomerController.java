@@ -21,6 +21,7 @@ public class CustomerController extends HttpServlet {
 	private CustomerService customerService = CustomerService.getInstance();
 
 	protected void doGet(HttpServletRequest request, HttpServletResponse response) throws ServletException, IOException {
+    	System.out.println("CustomerController - doGet");
 		RequestParams params = new RequestParams(request);
 		String requestURI = request.getRequestURI();
 		String uri = requestURI.replace(request.getContextPath(), "").replace(URL_PATTERN, "");

@@ -15,4 +15,6 @@ public class Constants {
 	public final static String LOGOUT = "/logout";
 
 	public final static String AUTH_COOKIE = "auth";
+	
+	public final static String REDIRECT_URI = "redirect_uri";
 }

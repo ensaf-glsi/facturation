@@ -4,6 +4,7 @@ import java.sql.Connection;
 import java.sql.ResultSet;
 import java.sql.SQLException;
 import java.sql.Statement;
+import java.util.Base64;
 import java.util.Date;
 
 import com.ensaf.facturation.config.DatabaseConnectionPool;
@@ -11,11 +12,14 @@ import com.ensaf.facturation.dao.CustomerDao;
 import com.ensaf.facturation.model.Customer;
 import com.ensaf.facturation.model.User;
 
+import io.jsonwebtoken.SignatureAlgorithm;
+import io.jsonwebtoken.security.Keys;
+
 public class Main {
 	static int count = 1;
-	
+
 	CustomerDao customerDao = CustomerDao.getInstance();
-	
+
 	void sleep(Integer seconds) {
 		try {
 			Thread.sleep(seconds * 1000); // attendre une seconde
@@ -24,23 +28,39 @@ public class Main {
 		}
 	}
 
-	public Main()  {
+	public Main() {
 //		jdbcExample();
 //		insertCustomer();
 //		updateCustomer();
 //		deleteCustomer();
 //		findCustomerById();
-		findCustomer();
+//		findCustomer();
 //		findCustomerMultiCriteria();
+		generateSecret();
 	}
-	
-	// dao ou repository : couche d'acces aux données 
-	
-	private void findCustomerById() {
+
+	void generateSecret() {
+        byte[] secretKey = Keys.secretKeyFor(SignatureAlgorithm.HS256).getEncoded();
+        String base64SecretKey = Base64.getEncoder().encodeToString(secretKey);
+        System.out.println(base64SecretKey);
+//		try {
+//			KeyGenerator keyGenerator = KeyGenerator.getInstance("HmacSHA256");
+//			SecretKey secretKey = keyGenerator.generateKey();
+//			String encodedKey = Base64.getEncoder().encodeToString(secretKey.getEncoded());
+//			System.out.println(encodedKey);
+//		} catch (NoSuchAlgorithmException e) {
+//			// TODO Auto-generated catch block
+//			e.printStackTrace();
+//		}
+	}
+
+	// dao ou repository : couche d'acces aux données
+
+	void findCustomerById() {
 		System.out.println(customerDao.findById(-1L));
 	}
 
-	private void findCustomer() {
+	void findCustomer() {
 		System.out.println("======== criteria null");
 		System.out.println(customerDao.find((String) null));
 		System.out.println("======== criteria empty");
@@ -69,38 +89,35 @@ public class Main {
 		System.out.println(user1);
 		System.out.println(user1.equals(user2));
 	}
-	
+
 	void jdbcExample() {
 		try (Connection connection = DatabaseConnectionPool.getConnection()) {
-            Statement statement = connection.createStatement();
-            ResultSet resultSet = statement.executeQuery("SELECT * FROM users");
-            while (resultSet.next()) {
-                // Handle result
-            	System.out.println(resultSet.getString("id"));
-            	System.out.println(resultSet.getString("name"));
-            }
-        } catch (SQLException e) {
-            // Handle exception
-        }
+			Statement statement = connection.createStatement();
+			ResultSet resultSet = statement.executeQuery("SELECT * FROM users");
+			while (resultSet.next()) {
+				// Handle result
+				System.out.println(resultSet.getString("id"));
+				System.out.println(resultSet.getString("name"));
+			}
+		} catch (SQLException e) {
+			// Handle exception
+		}
 	}
-	
+
 	Customer newCustomer(int n) {
-		return Customer.builder().name("name" + n)
-			.phone("phone" + n).email("email" + n)
-			.address("address" + n).build();
+		return Customer.builder().name("name" + n).phone("phone" + n).email("email" + n).address("address" + n).build();
 	}
-	
+
 	void insertCustomer() {
 		Customer c = customerDao.create(newCustomer(count++));
 		System.out.println(c);
 	}
 
 	void updateCustomer() {
-		Customer c = customerDao.update(
-				Customer.builder().id(5l).name("name" + 5)
-				.email("email" + 5).address("address" + 5).build()
-				
-		);
+		Customer c = customerDao
+				.update(Customer.builder().id(5l).name("name" + 5).email("email" + 5).address("address" + 5).build()
+
+				);
 		System.out.println(c);
 	}
 
@@ -108,7 +125,6 @@ public class Main {
 		System.out.println(customerDao.delete(8l));
 	}
 
-	
 	private User newUSer(Long id) {
 //		User user = new User();
 //		user.setId(id);
@@ -118,15 +134,9 @@ public class Main {
 //		user.setCreationDate(new Date());
 //		user.setPasswordExpiryDate(new Date());
 //		return user;
-		
-		return User.builder()
-				.id(id)
-				.username("user" + id)
-				.password("1234")
-				.enabled(true)
-				.creationDate(new Date())
-				.passwordExpiryDate(new Date())
-				.build();
+
+		return User.builder().id(id).username("user" + id).password("1234").enabled(true).creationDate(new Date())
+				.passwordExpiryDate(new Date()).build();
 	}
 
 	public static void main(String[] args) {

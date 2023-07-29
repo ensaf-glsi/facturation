@@ -26,7 +26,7 @@ public class AuthenticationService {
 		// hasher le password et le comparer avec user.getPassword(), si ko throw une exception
 		String dbPassword = USERS_DB.get(username);
 		if (Objects.equals(password, dbPassword)) {
-			return User.builder().username(username).enabled(true).build();	
+			return User.builder().username(username).enabled(true).role("ROLE_AUTH").build();	
 		}
 		return null;
 		

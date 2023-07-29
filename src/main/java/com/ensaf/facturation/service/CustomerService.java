@@ -4,6 +4,7 @@ import java.util.List;
 
 import com.ensaf.facturation.dao.CustomerDao;
 import com.ensaf.facturation.model.Customer;
+import com.ensaf.facturation.security.SecurityContextHolder;
 
 import lombok.Getter;
 import lombok.Setter;
@@ -42,6 +43,8 @@ public class CustomerService {
 	}
 	
 	public List<Customer> find(Customer filter) {
+    	System.out.println("CustomerService - find");
+		System.out.println(SecurityContextHolder.getContext());
 		return customerDao.find(filter);
 	}
 
